@@ -25,15 +25,22 @@ class StoriesRemote(private val database: StoriesDatabase, private val apiServic
         loadType: LoadType,
         state: PagingState<Int, Stories>,
     ): MediatorResult {
-        val page = when (loadType) {
-            LoadType.REFRESH -> null
-            LoadType.PREPEND -> return MediatorResult.Success(endOfPaginationReached = true)
+        val page = when(loadType){
+            LoadType.REFRESH ->{
+                val remoteKeys = getRemoteKeyClossetToCurrentPosition(state)
+                remoteKeys?.nextKey?.minus(1)?: INITIAL_PAGE_INDEX
+            }
+            LoadType.PREPEND->{
+                val remoteKeys = getRemoteKeyForFirstItem(state)
+                val prevKey = remoteKeys?.prevKey
+                    ?: return MediatorResult.Success(endOfPaginationReached = remoteKeys != null)
+                prevKey
+            }
             LoadType.APPEND -> {
                 val remoteKeys = getRemoteKeyForLastItem(state)
-                if (remoteKeys?.nextKey == null) {
-                    throw InvalidObjectException("Remote key should not be null for $loadType")
-                }
-                remoteKeys.nextKey
+                val nextKey = remoteKeys?.nextKey
+                    ?: return MediatorResult.Success(endOfPaginationReached = remoteKeys!=null)
+                nextKey
             }
         }
         val token = "Bearer ${pfef.getUserToken()}"

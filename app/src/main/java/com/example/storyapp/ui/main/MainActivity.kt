@@ -44,6 +44,7 @@ class MainActivity : AppCompatActivity() {
         sph = SharedPreferences(this)
 
         initializeStories()
+        getNewStories()
     }
 
     @SuppressLint("NotifyDataSetChanged")
